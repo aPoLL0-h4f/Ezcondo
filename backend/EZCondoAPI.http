@@ -1,0 +1,6 @@
+@EZCondoAPI_HostAddress = http://localhost:5263
+
+GET {{EZCondoAPI_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
