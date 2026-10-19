@@ -7,5 +7,5 @@ coverage/
 .env*
 !.env.example
 .vs/ 
- 
+/.github-source-inspect/
  
