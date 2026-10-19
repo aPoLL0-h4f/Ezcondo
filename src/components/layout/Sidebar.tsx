@@ -36,6 +36,8 @@ interface SidebarProps {
   currentRole: UserRole;
   openComplaintsCount: number;
   overdueInvoicesCount: number;
+  mobileOpen: boolean;
+  onCloseMobile: () => void;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
@@ -45,6 +47,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
   currentRole,
   openComplaintsCount,
   overdueInvoicesCount,
+  mobileOpen,
+  onCloseMobile,
 }) => {
   const navItems = [
     {
@@ -121,7 +125,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
   ];
 
   return (
-    <aside className="fixed inset-y-0 left-0 z-40 flex w-64 flex-col border-r border-slate-200 bg-white text-slate-800 shadow-sm">
+    <>
+      {mobileOpen && <button type="button" aria-label="Đóng menu" onClick={onCloseMobile} className="fixed inset-0 z-40 bg-slate-950/40 md:hidden" />}
+      <aside className={`fixed inset-y-0 left-0 z-50 flex w-64 flex-col border-r border-slate-200 bg-white text-slate-800 shadow-sm transition-transform md:translate-x-0 ${mobileOpen ? "translate-x-0" : "-translate-x-full"}`}>
       {/* Brand Header */}
       <div className="flex h-16 items-center gap-3 border-b border-slate-100 px-5">
         <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-700 text-white font-bold shadow-sm">
@@ -168,7 +174,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           return (
             <button
               key={item.id}
-              onClick={() => onSelectTab(item.id)}
+              onClick={() => { onSelectTab(item.id); onCloseMobile(); }}
               className={`group flex w-full items-center justify-between rounded-xl px-3 py-2 text-xs font-medium transition ${
                 isActive
                   ? 'bg-blue-50 text-blue-700 font-semibold'
@@ -211,6 +217,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <span className="text-[10px] text-slate-400 font-medium">Ca trực 24/7</span>
         </div>
       </div>
-    </aside>
+      </aside>
+    </>
   );
 };

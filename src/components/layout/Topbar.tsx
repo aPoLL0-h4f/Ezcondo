@@ -11,6 +11,7 @@ import {
   LogOut,
   Settings,
   LogIn,
+  Menu,
 } from 'lucide-react';
 import { TenantCondo, UserRole, UserAccount } from '../../types';
 import { ANNOUNCEMENTS } from '../../data/mockData';
@@ -28,6 +29,7 @@ interface TopbarProps {
   onOpenAuthModal: () => void;
   onOpenSettingsModal: () => void;
   onLogout: () => void;
+  onOpenMobileMenu: () => void;
 }
 
 export const Topbar: React.FC<TopbarProps> = ({
@@ -43,6 +45,7 @@ export const Topbar: React.FC<TopbarProps> = ({
   onOpenAuthModal,
   onOpenSettingsModal,
   onLogout,
+  onOpenMobileMenu,
 }) => {
   const [showTenantDropdown, setShowTenantDropdown] = useState(false);
   const [showRoleDropdown, setShowRoleDropdown] = useState(false);
@@ -75,139 +78,155 @@ export const Topbar: React.FC<TopbarProps> = ({
 
   const unreadCount = ANNOUNCEMENTS.filter((a) => !readNotifications.includes(a.id)).length;
 
+  // Reuse the same selectors in the desktop toolbar and the second mobile row.
+  const renderTenantSelector = (mobile = false) => (
+    <div className="relative min-w-0">
+      <button
+        onClick={() => {
+          setShowTenantDropdown(!showTenantDropdown);
+          setShowRoleDropdown(false);
+          setShowNotifications(false);
+          setShowUserDropdown(false);
+        }}
+        className={mobile
+          ? 'flex w-full min-w-0 items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-700 hover:bg-slate-50 transition'
+          : 'flex max-w-[140px] items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs text-slate-700 hover:bg-slate-50 transition'}
+      >
+        <Building2 className="h-4 w-4 shrink-0 text-slate-500" />
+        <span className={mobile ? 'min-w-0 flex-1 truncate text-left font-semibold text-slate-900' : 'max-w-[110px] truncate text-left font-semibold text-slate-900'}>
+          {currentTenant.name}
+        </span>
+        <ChevronDown className="h-3.5 w-3.5 shrink-0 text-slate-400" />
+      </button>
+
+      {showTenantDropdown && (
+        <div className={mobile
+          ? 'fixed left-3 right-3 top-[7.5rem] z-50 max-h-[60vh] overflow-y-auto rounded-xl border border-slate-200 bg-white p-2 shadow-lg'
+          : 'absolute right-0 z-50 mt-2 w-72 rounded-xl border border-slate-200 bg-white p-2 shadow-lg'}
+        >
+          <div className="px-3 py-1.5 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+            Chọn chung cư điều hành
+          </div>
+          <div className="mt-1 space-y-1">
+            {allTenants.map((tenant) => (
+              <button
+                key={tenant.id}
+                onClick={() => {
+                  onSelectTenant(tenant);
+                  setShowTenantDropdown(false);
+                }}
+                className={`flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-xs transition ${
+                  currentTenant.id === tenant.id
+                    ? 'bg-blue-50 text-blue-700 font-semibold'
+                    : 'text-slate-700 hover:bg-slate-50'
+                }`}
+              >
+                <div className="min-w-0">
+                  <div className="truncate font-medium text-slate-900">{tenant.name}</div>
+                  <div className="text-[11px] text-slate-400">
+                    {tenant.totalApartments} căn • Mã {tenant.code}
+                  </div>
+                </div>
+                {currentTenant.id === tenant.id && <Check className="h-4 w-4 shrink-0 text-blue-600" />}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+
+  const renderRoleSelector = (mobile = false) => (
+    <div className="relative min-w-0">
+      <button
+        onClick={() => {
+          setShowRoleDropdown(!showRoleDropdown);
+          setShowTenantDropdown(false);
+          setShowNotifications(false);
+          setShowUserDropdown(false);
+        }}
+        className={mobile
+          ? 'flex w-full min-w-0 items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-medium text-slate-700 hover:bg-slate-100 transition'
+          : 'flex max-w-[180px] items-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-100 transition'}
+      >
+        <Shield className="h-3.5 w-3.5 shrink-0 text-slate-500" />
+        <span className="min-w-0 flex-1 truncate text-left font-semibold text-slate-900">
+          {roleLabels[currentRole].label}
+        </span>
+        <ChevronDown className="h-3.5 w-3.5 shrink-0 text-slate-400" />
+      </button>
+
+      {showRoleDropdown && (
+        <div className={mobile
+          ? 'fixed left-3 right-3 top-[7.5rem] z-50 rounded-xl border border-slate-200 bg-white p-2 shadow-lg'
+          : 'absolute right-0 z-50 mt-2 w-80 rounded-xl border border-slate-200 bg-white p-2 shadow-lg'}
+        >
+          <div className="px-3 py-1.5 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+            Chuyển vai trò xem giao diện
+          </div>
+          <div className="mt-1 space-y-1">
+            {(Object.keys(roleLabels) as UserRole[]).map((role) => (
+              <button
+                key={role}
+                onClick={() => {
+                  onSelectRole(role);
+                  setShowRoleDropdown(false);
+                }}
+                className={`flex w-full items-center justify-between rounded-lg p-2.5 text-left text-xs transition ${
+                  currentRole === role
+                    ? 'bg-blue-50 text-blue-900 font-semibold'
+                    : 'text-slate-700 hover:bg-slate-50'
+                } ${mobile ? 'px-3 py-1.5' : ''}`}
+              >
+                <div className="min-w-0 flex-1 pr-2">
+                  <div className="truncate font-semibold text-slate-900">{roleLabels[role].label}</div>
+                  <p className={`mt-0.5 text-[11px] text-slate-500 font-normal leading-normal ${mobile ? 'mt-0 truncate' : ''}`}>
+                    {roleLabels[role].desc}
+                  </p>
+                </div>
+                {currentRole === role && <Check className="h-4 w-4 shrink-0 text-blue-600" />}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
   return (
-    <header className="sticky top-0 z-30 flex h-16 w-full items-center justify-between border-b border-slate-200 bg-white px-6">
+    <header className="sticky top-0 z-30 w-full border-b border-slate-200 bg-white px-3 sm:px-6 md:flex md:min-h-16 md:items-center">
+      {/* Top row: menu, search, notifications and profile */}
+      <div className="flex min-h-16 w-full items-center gap-2">
+      <button type="button" onClick={onOpenMobileMenu} aria-label="Mở menu" className="shrink-0 rounded-lg p-2 text-slate-600 hover:bg-slate-100 md:hidden">
+        <Menu className="h-5 w-5" />
+      </button>
       {/* Search Input */}
-      <div className="relative w-80 max-w-full">
+      <div className="relative min-w-0 max-w-[260px] flex-1 md:w-80 md:flex-none md:max-w-full">
         <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
         <input
           type="text"
           value={searchQuery}
           onChange={(e) => onSearchChange(e.target.value)}
           placeholder="Tìm căn hộ, cư dân, hóa đơn, sự cố..."
-          className="w-full rounded-lg border border-slate-200 bg-slate-50 py-1.5 pl-9 pr-3 text-xs text-slate-800 placeholder-slate-400 focus:border-blue-600 focus:bg-white focus:outline-none"
+          className="h-9 w-full rounded-lg border border-slate-200 bg-slate-50 py-1.5 pl-9 pr-3 text-xs text-slate-800 placeholder-slate-400 focus:border-blue-600 focus:bg-white focus:outline-none"
         />
       </div>
 
       {/* Right controls */}
-      <div className="flex items-center gap-3">
+      <div className="ml-auto mr-0 max-md:mr-4 flex shrink-0 items-center gap-2 sm:gap-3">
         {/* Support Assistant Button */}
         {onOpenAIChat && (
           <button
             onClick={onOpenAIChat}
-            className="hidden sm:flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition"
+            className="hidden md:flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition"
           >
             <MessageCircle className="h-4 w-4 text-blue-700" />
             <span>Trợ lý 24/7</span>
           </button>
         )}
 
-        {/* Multi-tenant Switcher */}
-        <div className="relative">
-          <button
-            onClick={() => {
-              setShowTenantDropdown(!showTenantDropdown);
-              setShowRoleDropdown(false);
-              setShowNotifications(false);
-              setShowUserDropdown(false);
-            }}
-            className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs text-slate-700 hover:bg-slate-50 transition"
-          >
-            <Building2 className="h-4 w-4 text-slate-500" />
-            <div className="text-left max-w-[140px] truncate">
-              <span className="block font-semibold text-slate-900 truncate">
-                {currentTenant.name}
-              </span>
-            </div>
-            <ChevronDown className="h-3.5 w-3.5 text-slate-400" />
-          </button>
-
-          {showTenantDropdown && (
-            <div className="absolute right-0 mt-2 w-72 rounded-xl border border-slate-200 bg-white p-2 shadow-lg z-50">
-              <div className="px-3 py-1.5 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
-                Chọn chung cư điều hành
-              </div>
-              <div className="space-y-1 mt-1">
-                {allTenants.map((tenant) => (
-                  <button
-                    key={tenant.id}
-                    onClick={() => {
-                      onSelectTenant(tenant);
-                      setShowTenantDropdown(false);
-                    }}
-                    className={`flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-xs transition ${
-                      currentTenant.id === tenant.id
-                        ? 'bg-blue-50 text-blue-700 font-semibold'
-                        : 'text-slate-700 hover:bg-slate-50'
-                    }`}
-                  >
-                    <div>
-                      <div className="font-medium text-slate-900">{tenant.name}</div>
-                      <div className="text-[11px] text-slate-400">
-                        {tenant.totalApartments} căn • Mã {tenant.code}
-                      </div>
-                    </div>
-                    {currentTenant.id === tenant.id && (
-                      <Check className="h-4 w-4 text-blue-600" />
-                    )}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Role Switcher */}
-        <div className="relative">
-          <button
-            onClick={() => {
-              setShowRoleDropdown(!showRoleDropdown);
-              setShowTenantDropdown(false);
-              setShowNotifications(false);
-              setShowUserDropdown(false);
-            }}
-            className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-100 transition"
-          >
-            <Shield className="h-3.5 w-3.5 text-slate-500" />
-            <span className="font-semibold text-slate-900">{roleLabels[currentRole].label}</span>
-            <ChevronDown className="h-3.5 w-3.5 text-slate-400" />
-          </button>
-
-          {showRoleDropdown && (
-            <div className="absolute right-0 mt-2 w-80 rounded-xl border border-slate-200 bg-white p-2 shadow-lg z-50">
-              <div className="px-3 py-1.5 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
-                Chuyển vai trò xem giao diện
-              </div>
-              <div className="space-y-1 mt-1">
-                {(Object.keys(roleLabels) as UserRole[]).map((r) => (
-                  <button
-                    key={r}
-                    onClick={() => {
-                      onSelectRole(r);
-                      setShowRoleDropdown(false);
-                    }}
-                    className={`flex w-full items-start justify-between rounded-lg p-2.5 text-left text-xs transition ${
-                      currentRole === r
-                        ? 'bg-blue-50 text-blue-900 font-semibold'
-                        : 'text-slate-700 hover:bg-slate-50'
-                    }`}
-                  >
-                    <div>
-                      <div className="font-semibold text-slate-900">
-                        {roleLabels[r].label}
-                      </div>
-                      <p className="mt-0.5 text-[11px] text-slate-500 font-normal leading-normal">
-                        {roleLabels[r].desc}
-                      </p>
-                    </div>
-                    {currentRole === r && <Check className="h-4 w-4 text-blue-600 mt-0.5 shrink-0" />}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-
+        {/* Desktop tenant and role selectors; mobile uses the second row below. */}
+        <div className="hidden md:block">{renderTenantSelector()}</div>
+        <div className="hidden md:block">{renderRoleSelector()}</div>
         {/* Notification Bell */}
         <div className="relative">
           <button
@@ -217,7 +236,7 @@ export const Topbar: React.FC<TopbarProps> = ({
               setShowRoleDropdown(false);
               setShowUserDropdown(false);
             }}
-            className="relative rounded-lg border border-slate-200 p-2 text-slate-600 hover:bg-slate-50 transition"
+            className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-slate-200 p-0 text-slate-600 hover:bg-slate-50 transition"
           >
             <Bell className="h-4 w-4" />
             {unreadCount > 0 && (
@@ -269,7 +288,8 @@ export const Topbar: React.FC<TopbarProps> = ({
         </div>
 
         {/* User profile avatar & menu */}
-        <div className="relative pl-2 border-l border-slate-200">
+        <div className="relative pl-2 max-sm:pl-2">
+          <span aria-hidden="true" className="absolute bottom-1 left-0.5 top-1 w-px bg-slate-200" />
           <button
             onClick={() => {
               setShowUserDropdown(!showUserDropdown);
@@ -277,7 +297,7 @@ export const Topbar: React.FC<TopbarProps> = ({
               setShowRoleDropdown(false);
               setShowNotifications(false);
             }}
-            className="flex items-center gap-2 hover:opacity-80 transition text-left"
+            className="flex items-center gap-2 hover:opacity-80 transition text-left translate-x-0.5"
           >
             <div className="h-8 w-8 rounded-full bg-slate-800 text-white flex items-center justify-center font-bold text-xs">
               {currentUser.name.charAt(0)}
@@ -290,7 +310,7 @@ export const Topbar: React.FC<TopbarProps> = ({
                 {roleLabels[currentUser.role]?.label || 'Tài khoản'}
               </span>
             </div>
-            <ChevronDown className="h-3 w-3 text-slate-400" />
+
           </button>
 
           {showUserDropdown && (
@@ -342,6 +362,13 @@ export const Topbar: React.FC<TopbarProps> = ({
             </div>
           )}
         </div>
+      </div>
+      </div>
+
+      {/* Second row on mobile: full-width building and role selectors */}
+      <div className="grid grid-cols-2 gap-2 pb-3 md:hidden">
+        {renderTenantSelector(true)}
+        {renderRoleSelector(true)}
       </div>
     </header>
   );

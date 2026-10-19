@@ -84,6 +84,7 @@ export default function App() {
   // Global search & UI
   const [searchQuery, setSearchQuery] = useState('');
   const [isAIChatOpen, setIsAIChatOpen] = useState(false);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
   // ============================================================
   // FETCH ALL DATA FROM C# BACKEND API ON MOUNT
@@ -681,7 +682,7 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 font-sans text-slate-800 antialiased">
+    <div className="min-h-screen bg-slate-50 font-sans text-slate-800 antialiased max-sm:w-full max-sm:max-w-[100vw] max-sm:overflow-x-hidden">
       {/* Fixed Left Sidebar */}
       <Sidebar
         activeTab={activeTab}
@@ -690,10 +691,12 @@ export default function App() {
         currentRole={currentRole}
         openComplaintsCount={openComplaintsCount}
         overdueInvoicesCount={overdueInvoicesCount}
+        mobileOpen={mobileNavOpen}
+        onCloseMobile={() => setMobileNavOpen(false)}
       />
 
       {/* Main Content Area */}
-      <div className="pl-64 flex flex-col min-h-screen">
+      <div className="flex min-h-screen flex-col md:pl-64 max-sm:min-w-0 max-sm:w-full max-sm:max-w-[100vw]">
         {/* Topbar */}
         <Topbar
           currentTenant={currentTenant}
@@ -708,10 +711,11 @@ export default function App() {
           onOpenAuthModal={() => setShowAuthModal(true)}
           onOpenSettingsModal={() => setShowSettingsModal(true)}
           onLogout={handleLogout}
+          onOpenMobileMenu={() => setMobileNavOpen(true)}
         />
 
         {/* Dynamic Route Content */}
-        <main className="flex-1 p-6 lg:p-8">
+        <main className="min-w-0 flex-1 overflow-x-hidden p-4 sm:p-6 lg:p-8 max-sm:w-full max-sm:max-w-full max-sm:px-3">
           {activeTab === 'dashboard' && (
             <DashboardView
               currentTenant={currentTenant}
